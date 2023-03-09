@@ -18,6 +18,7 @@ function App() {
   return (
     <Suspense fallback={<Loading/>}>
       <Routes>
+        <Route index path="/" element={<LoginPage/>}/>
         <Route index path="/login" element={<LoginPage/>}/>
         <Route path="/forgot-password" element={<ForgotPassword/>}/>
         <Route path="/home" element={<UserHome/>}/>
