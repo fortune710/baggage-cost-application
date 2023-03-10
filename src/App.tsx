@@ -11,6 +11,7 @@ import UserHome from './pages/Home';
 import CalculateBaggage from './pages/Calculate';
 import AddUserPage from './pages/Admin/CreateUser';
 import PaymentsPage from './pages/Admin/Transactions';
+import Update from './pages/Admin/Update';
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword').then(module => ({ default: module.default })));
 
 function App() {
@@ -27,8 +28,8 @@ function App() {
         <Route path='/admin' element={<AdminDashboard/>}>
           <Route path='users' index element={<StaffTable/>}/>
           <Route path="payments" element={<PaymentsPage/>}/>
-          <Route path="update" element={<h2>hello</h2>} />
           <Route path="add-user" element={<AddUserPage/>} />
+          <Route path="update" element={<Update/>} />
         </Route>
       </Routes>
     </Suspense>

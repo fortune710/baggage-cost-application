@@ -12,6 +12,8 @@
     "@chakra-ui/react": "^2.5.1",
     "@emotion/react": "^11.10.6",
     "@emotion/styled": "^11.10.6",
+    "capacitor": "^0.5.5",
+    "firebase": "^9.17.2",
     "framer-motion": "^10.2.3",
     "html2canvas": "^1.4.1",
     "jspdf": "^2.5.1",

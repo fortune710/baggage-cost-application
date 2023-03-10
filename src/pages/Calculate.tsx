@@ -1,9 +1,13 @@
-import { Box, Button, Container, Flex, HStack, Input, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay, Select, Stack, Table, TableContainer, Tbody, Td, Text, Tfoot, Th, Thead, Tr, useColorModeValue, useDisclosure } from "@chakra-ui/react";
+import { Box, Button, Container, Flex, Heading, HStack, Input, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay, Select, Stack, Table, TableContainer, Tbody, Td, Text, Tfoot, Th, Thead, Tr, useColorModeValue, useDisclosure } from "@chakra-ui/react";
 import { useReducer, useRef, useState } from "react";
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { QRCode } from 'react-qrcode-logo';
 import { getAllowedWeight } from "../helpers/getAllowedWeight";
+import { addDoc, collection, doc, setDoc, Timestamp } from "firebase/firestore";
+import { auth, firestore } from "../environments/firebase";
+import { useAllowedWeights } from '../hooks/useAllowedWeights';
+import { generate12CharId } from "../helpers/generateId";
 
 
 interface ReducerState {
@@ -33,10 +37,17 @@ const reducer = (state:ReducerState, action:ReducerAction) => {
       default:
         return state;
     }
-  };
+};
+
+function generateId() {
+    const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    const randomLetter = alphabet.charAt(Math.floor(Math.random() * alphabet.length));
+    const randomNumber = Math.floor(Math.random() * 1000).toString().padStart(3, "0");
+    return randomLetter + randomNumber;
+}
+  
 
 const CalculateBaggage: React.FC = () => {
-
     const [state, dispatch] = useReducer(reducer, { tickets: [] });
     const [ticketID, setTicketID] = useState<string>("");
     const [ticketClass, setClass] = useState<string>("");
@@ -44,18 +55,27 @@ const CalculateBaggage: React.FC = () => {
     const [totalWeight, setTotalWeight] = useState<number>(0);
     const invoiceRef = useRef<HTMLDivElement>(null);
     const { isOpen, onOpen, onClose } = useDisclosure();
+    const [paymentID, setPaymentID] = useState<string>("");
+    
+    const transactionsRef = doc(firestore, "transactions", generate12CharId());
+    const { allowedWeights } = useAllowedWeights();
 
-
+    
     const AddTicket = () => {
         const ticket = {
             id: ticketID,
             class: ticketClass,
-            allowedWeight: getAllowedWeight(ticketClass)
+            allowedWeight: allowedWeights.find((weight) => weight.id === ticketClass)?.allowed_weight!
         }
         dispatch({ type: Actions.ADD_ITEM, payload: ticket });
     }
 
-    const generateInvoice = async () => {
+    const openModal = async () => {
+        onOpen();
+        setPaymentID(generateId());
+    }
+
+    const generateInvoice = async (amount: number) => {
         const element = invoiceRef?.current;
         const canvas = await html2canvas(element!);
         const data = canvas.toDataURL('image/png');
@@ -70,6 +90,16 @@ const CalculateBaggage: React.FC = () => {
         const file = pdf.save('your-resume.pdf');
         const blob = file.output('blob')
         console.log(blob); 
+
+        await setDoc(transactionsRef, {
+            payment_id: paymentID,
+            amount,
+            date: Timestamp.fromDate(new Date()),
+            issued_by: {
+                id: auth.currentUser?.uid!,
+                name: auth.currentUser?.displayName!
+            }
+        })
   
     }
 
@@ -94,9 +124,11 @@ const CalculateBaggage: React.FC = () => {
                         <Text>Class</Text>
                         <Select variant={'filled'} onChange={(e) => setClass(e.target.value)}>
                             <option value=""></option>
-                            <option value="First-Class">First Class</option>
-                            <option value="Business-Class">Business Class</option>
-                            <option value="Economy-Class">Economy Class</option>
+                            {
+                                allowedWeights.map((item, index) => (
+                                    <option key={index} value={item.id}>{item.id.replaceAll('-', ' ')}</option>
+                                ))
+                            }
                         </Select>
                     </div>
 
@@ -115,7 +147,7 @@ const CalculateBaggage: React.FC = () => {
                                     <Th>S/N</Th>
                                     <Th>Ticket ID</Th>
                                     <Th isNumeric>Class</Th>
-                                    <Th>Allowed Baggage</Th>
+                                    <Th>Allowed Baggage (KG)</Th>
                                 </Tr>
                             </Thead>
                             <Tbody>
@@ -133,9 +165,9 @@ const CalculateBaggage: React.FC = () => {
                             <Tfoot>
                                 <Tr>
                                     <Th>S/N</Th>
-                                    <Th>Transaction ID</Th>
-                                    <Th isNumeric>Amount</Th>
-                                    <Th>Date</Th>
+                                    <Th>Ticket ID</Th>
+                                    <Th isNumeric>Class</Th>
+                                    <Th>Allowed Baggage (KG)</Th>
                                 </Tr>
                             </Tfoot>
                         </Table>
@@ -178,7 +210,7 @@ const CalculateBaggage: React.FC = () => {
                     _hover={{
                         bg: 'blue.500',
                     }}
-                    onClick={onOpen}
+                    onClick={openModal}
                 >
                     Generate Invoice
                 </Button>
@@ -190,19 +222,20 @@ const CalculateBaggage: React.FC = () => {
                 <ModalContent>
                     <ModalHeader>Your Invoice</ModalHeader>
                     <ModalCloseButton />
-                    <ModalBody ref={invoiceRef}>
+                    <ModalBody justifyContent={"center"} ref={invoiceRef}>
+                        <Heading>{paymentID}</Heading>
                         <QRCode fgColor="#fff" bgColor="#000" value="D002"/>
                         <Text>
                             Excess: {totalWeight - state.tickets.reduce((acc, item) => acc + item.allowedWeight, 0)}
                         </Text>
 
                         <Text>
-                            Amount to be Paid: {(totalWeight - state.tickets.reduce((acc, item) => acc + item.allowedWeight, 0)) * 100  < 0 ? 0 :(totalWeight - state.tickets.reduce((acc, item) => acc + item.allowedWeight, 0)) * 100}
+                            Amount to be Paid: {(totalWeight - state.tickets.reduce((acc, item) => acc + item.allowedWeight, 0)) * 100  < 0 ? 0 :(totalWeight - state.tickets.reduce((acc, item) => acc + item.allowedWeight, 0)) * 1500}
                         </Text>
                     </ModalBody>
                     <ModalFooter>
                         <Button 
-                            onClick={generateInvoice} 
+                            onClick={() => generateInvoice((totalWeight - state.tickets.reduce((acc, item) => acc + item.allowedWeight, 0)) * 100  < 0 ? 0 :(totalWeight - state.tickets.reduce((acc, item) => acc + item.allowedWeight, 0)) * 100)} 
                             colorScheme='blue' 
                             mr={3} 
                         >

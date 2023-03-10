@@ -36,6 +36,7 @@ import {
 import { IconType } from 'react-icons';
 import MobileNav from '../../components/MobileNav';
 import { Outlet, Link as ReactRouterLink, useLocation } from 'react-router-dom';
+import { MdOutlineAirplaneTicket } from 'react-icons/md';
 
 interface LinkItemProps {
   name: string;
@@ -45,6 +46,7 @@ interface LinkItemProps {
 const LinkItems: Array<LinkItemProps> = [
   { name: 'Users', icon: FiHome, route: '/admin/users' },
   { name: 'Payments', icon: FiTrendingUp, route: '/admin/payments' },
+  { name: 'Ticket Classes', icon: MdOutlineAirplaneTicket, route: '/admin/update' },
 ];
 
 const AdminDashboard: React.FC = () => {
@@ -118,7 +120,7 @@ const NavItem = ({ icon, children, route, ...rest }: NavItemProps) => {
       <Link 
         as={ReactRouterLink} 
         to={route} 
-        style={{ textDecoration: 'none', marginBottom: '10px' }} 
+        style={{ textDecoration: 'none' }} 
         _focus={{ boxShadow: 'none' }}
       >
         <Flex
@@ -131,6 +133,7 @@ const NavItem = ({ icon, children, route, ...rest }: NavItemProps) => {
           sx={{
             bg: router.pathname === route && 'cyan.400',
             color: router.pathname === route && 'white',
+            marginBottom: '5px'
           }}
           _hover={{
             bg: 'cyan.400',

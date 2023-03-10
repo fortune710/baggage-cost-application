@@ -11,12 +11,65 @@ import {
     Heading,
     Text,
     useColorModeValue,
+    useToast,
 } from '@chakra-ui/react';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { doc, Timestamp, updateDoc } from 'firebase/firestore';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { auth, firestore } from '../environments/firebase';
+
+interface FormFields {
+  email: string;
+  password: string;
+}
+
   
 function LoginCard() {
   const navigate = useNavigate();
-    return (
+
+  const [form, setForm] = useState<FormFields>({
+    email: '',
+    password: '',
+  });
+  const [isLoading, setLoading] = useState<boolean>(false);
+  const toast = useToast();
+
+
+  
+
+  const signIn = async () => {
+    setLoading(true);
+    try {
+      const {user} = await signInWithEmailAndPassword(auth, form.email, form.password);
+      const ref = doc(firestore, 'users', user.uid);
+      await updateDoc(ref, {
+        last_login: Timestamp.fromDate(new Date())
+      })
+
+      setLoading(false);
+      toast({
+        title: "Login Sucessful",
+        position: "top-right",
+        status: "success",
+        isClosable: true
+      })
+      navigate('/home');
+
+    } catch (err:any) {
+      setLoading(false);
+      toast({
+        title: err.code,
+        position: "top-right",
+        status: "error",
+        isClosable: true
+      })
+
+
+    }
+  }
+
+  return (
     <Flex
         minH={'100vh'}
         align={'center'}
@@ -32,25 +85,30 @@ function LoginCard() {
             bg={useColorModeValue('white', 'gray.700')}
             boxShadow={'lg'}
             p={8}>
+
             <Stack spacing={4}>
               <FormControl id="email">
                 <FormLabel>Email address</FormLabel>
-                <Input type="email" />
+                <Input  
+                  type="email" 
+                  onChange={(e:any) => setForm({ ...form, email: e.target.value })} 
+                  required
+                />
               </FormControl>
+
               <FormControl id="password">
                 <FormLabel>Password</FormLabel>
-                <Input type="password" />
+                <Input 
+                  type="password" 
+                  onChange={(e:any) => setForm({ ...form, password: e.target.value })} 
+                  required
+
+                />
               </FormControl>
               <Stack spacing={10}>
-                <Stack
-                  direction={{ base: 'column', sm: 'row' }}
-                  align={'start'}
-                  justify={'space-between'}>
-                  <Checkbox>Remember me</Checkbox>
-                  <Link color={'blue.400'}>Forgot password?</Link>
-                </Stack>
                 <Button
-                  onClick={() => navigate('/home')}
+                  isLoading={isLoading}
+                  onClick={signIn}
                   bg={'blue.400'}
                   color={'white'}
                   _hover={{

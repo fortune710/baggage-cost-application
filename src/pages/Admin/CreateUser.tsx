@@ -11,33 +11,106 @@ import {
     Heading,
     Text,
     useColorModeValue,
+    useToast,
 } from '@chakra-ui/react';
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
+import { useState } from 'react';
+import { auth, firestore } from '../../environments/firebase';
+
+interface FormFields {
+    name: string;
+    email: string;
+    password: string;
+}
+
   
 function AddUserCard() {
+    const [form, setForm] = useState<FormFields>({
+        email: '',
+        password: '',
+        name: '',
+    });
+    const toast = useToast();
+
+    const addNewUser = async ({ email, password, name }: FormFields) => {
+
+        try {
+            const { user } = await createUserWithEmailAndPassword(auth, email, password);
+            const ref = doc(firestore, 'users', user.uid);
+            
+            await Promise.all([
+                await setDoc(ref, {
+                    name,
+                    email,
+                    id: user.uid,
+                    last_login: null,
+                    password: password,
+                    role: 'user',
+                    last_logout: null,
+                }),
+                await updateProfile(user, { displayName: name })
+            ])
+    
+            toast({
+                title: "User created",
+                position: "top-right",
+                status: "success",
+                isClosable: true
+            })
+    
+            
+        } catch (error:any) {
+            //console.log(error);
+
+            toast({
+                title: error.code,
+                position: "top-right",
+                status: "error",
+                isClosable: true
+            })
+
+        }
+    }
+    
+
+
     return (
     <Stack spacing={8} mx={'auto'} maxW={'lg'} py={12} px={6}>
         <Stack align={'center'}>
-        <Heading fontSize={'4xl'}>Create New User</Heading>
+            <Heading fontSize={'4xl'}>Create New User</Heading>
         </Stack>
         <Box
-        rounded={'lg'}
-        bg={useColorModeValue('white', 'gray.700')}
-        boxShadow={'lg'}
-        p={8}>
+            rounded={'lg'}
+            bg={useColorModeValue('white', 'gray.700')}
+            boxShadow={'lg'}
+            p={8}>
         <Stack spacing={4}>
-            <FormControl id="email">
+            <FormControl id="full_name">
                 <FormLabel>Full Name</FormLabel>
-                <Input type="text" />
+                <Input 
+                    required 
+                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                    type="text" 
+                />
             </FormControl>
 
             <FormControl id="email">
                 <FormLabel>Email address</FormLabel>
-                <Input type="email" />
+                <Input 
+                    required
+                    onChange={(e) => setForm({ ...form, email: e.target.value })}
+                    type="email"
+                />
             </FormControl>
 
             <FormControl id="password">
                 <FormLabel>Password</FormLabel>
-                <Input type="password" />
+                <Input 
+                    type="password" 
+                    required
+                    onChange={(e) => setForm({ ...form, password: e.target.value })}
+                />
             </FormControl>
 
             <Stack spacing={10}>
@@ -51,7 +124,9 @@ function AddUserCard() {
                     color={'white'}
                     _hover={{
                         bg: 'blue.500',
-                    }}>
+                    }}
+                    onClick={() => addNewUser(form)}
+                >
                     Add User
                 </Button>
             </Stack>

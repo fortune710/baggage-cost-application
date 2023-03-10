@@ -1,11 +1,14 @@
-import { TableContainer, Table, Thead, Tr, Th, Tbody, Td, Tfoot } from "@chakra-ui/react"
-import { transactions } from "../../mock/transactions"
+import { TableContainer, Table, Thead, Tr, Th, Tbody, Td, Tfoot, Skeleton, TableCaption } from "@chakra-ui/react"
+import { useStaff } from "../../hooks/useTransaction"
 
 const PaymentsPage: React.FC = () => {
+    const { transaction, isLoading, error } = useStaff();
+
     return (
         <section className="staff-table">
             <TableContainer>
                 <Table variant='striped' colorScheme='teal'>
+                    { error && <TableCaption>Error While Loading Data</TableCaption>}
                     <Thead>
                         <Tr>
                             <Th>S/N</Th>
@@ -16,12 +19,28 @@ const PaymentsPage: React.FC = () => {
                     </Thead>
                     <Tbody>
                         {
-                            transactions.map(transaction => (
+                            isLoading ? (
                                 <Tr>
-                                    <Td>{transaction.serial_number}</Td>
-                                    <Td>{transaction.transaction_id}</Td>
+                                    <Td>
+                                        <Skeleton/>
+                                    </Td>
+                                    <Td>
+                                        <Skeleton/>
+                                    </Td>
+                                    <Td>
+                                        <Skeleton/>
+                                    </Td>
+                                    <Td>
+                                        <Skeleton/>
+                                    </Td>
+                                </Tr>
+                            ) :
+                            transaction.map((transaction, index) => (
+                                <Tr>
+                                    <Td>{index}</Td>
+                                    <Td>{transaction.id}</Td>
                                     <Td isNumeric>{transaction.amount}</Td>
-                                    <Td>{transaction.date}</Td>
+                                    <Td>{""}</Td>
                                 </Tr>
                             ))
                         }
