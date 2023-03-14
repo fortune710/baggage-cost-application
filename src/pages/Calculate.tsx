@@ -1,4 +1,4 @@
-import { Box, Button, Container, Flex, Heading, HStack, Input, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay, Select, Stack, Table, TableContainer, Tbody, Td, Text, Tfoot, Th, Thead, Tr, useColorModeValue, useDisclosure } from "@chakra-ui/react";
+import { Box, Button, Container, Flex, Heading, HStack, Input, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay, Select, Stack, Table, TableContainer, Tbody, Td, Text, Tfoot, Th, Thead, Tr, useColorModeValue, useDisclosure, useToast, VStack } from "@chakra-ui/react";
 import { useReducer, useRef, useState } from "react";
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
@@ -59,6 +59,7 @@ const CalculateBaggage: React.FC = () => {
     
     const transactionsRef = doc(firestore, "transactions", generate12CharId());
     const { allowedWeights } = useAllowedWeights();
+    const toast = useToast();
 
     
     const AddTicket = () => {
@@ -70,12 +71,43 @@ const CalculateBaggage: React.FC = () => {
         dispatch({ type: Actions.ADD_ITEM, payload: ticket });
     }
 
-    const openModal = async () => {
+    const addTransactionToFirestore = async (amount: number) => {
         onOpen();
-        setPaymentID(generateId());
+        const paymentId = generateId();
+        setPaymentID(paymentId);
+
+        try {
+            await setDoc(transactionsRef, {
+                payment_id: paymentId,
+                amount,
+                date: Timestamp.fromDate(new Date()),
+                issued_by: {
+                    id: auth.currentUser?.uid!,
+                    name: auth.currentUser?.displayName!
+                },
+                status: "pending",
+                tickets: state.tickets
+            })
+
+            toast({
+                title: "Successful",
+                position: "top-right",
+                status: "success",
+                isClosable: true
+            })
+        
+        } catch (err) {
+            toast({
+                title: "Error while adding record",
+                position: "top-right",
+                status: "error",
+                isClosable: true
+            })
+        
+        }   
     }
 
-    const generateInvoice = async (amount: number) => {
+    const generateInvoice = async () => {
         const element = invoiceRef?.current;
         const canvas = await html2canvas(element!);
         const data = canvas.toDataURL('image/png');
@@ -87,19 +119,7 @@ const CalculateBaggage: React.FC = () => {
           (imgProperties.height * pdfWidth) / imgProperties.width;
     
         pdf.addImage(data, 'PNG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
-        const file = pdf.save('your-resume.pdf');
-        const blob = file.output('blob')
-        console.log(blob); 
-
-        await setDoc(transactionsRef, {
-            payment_id: paymentID,
-            amount,
-            date: Timestamp.fromDate(new Date()),
-            issued_by: {
-                id: auth.currentUser?.uid!,
-                name: auth.currentUser?.displayName!
-            }
-        })
+        const file = pdf.save(`Payment-${paymentID}.pdf`);
   
     }
 
@@ -112,7 +132,7 @@ const CalculateBaggage: React.FC = () => {
             padding={2}
             bg={useColorModeValue('gray.50', 'gray.800')}
         >
-            <Container width="50%" maxWidth="90%">
+            <Container minWidth="50%" maxWidth="90%">
 
                 <Stack>
                     <div>
@@ -140,9 +160,9 @@ const CalculateBaggage: React.FC = () => {
 
 
                 <section className="staff-table">
-                    <TableContainer>
+                    <TableContainer overflowY={"auto"} maxHeight="250px">
                         <Table variant='striped' colorScheme='teal'>
-                            <Thead>
+                            <Thead position="sticky" top={0} zIndex={999}>
                                 <Tr>
                                     <Th>S/N</Th>
                                     <Th>Ticket ID</Th>
@@ -150,7 +170,7 @@ const CalculateBaggage: React.FC = () => {
                                     <Th>Allowed Baggage (KG)</Th>
                                 </Tr>
                             </Thead>
-                            <Tbody>
+                            <Tbody zIndex={5}>
                                 {
                                     state.tickets.map((item, index) => (
                                         <Tr key={index}>
@@ -162,14 +182,6 @@ const CalculateBaggage: React.FC = () => {
                                     ))
                                 }
                             </Tbody>
-                            <Tfoot>
-                                <Tr>
-                                    <Th>S/N</Th>
-                                    <Th>Ticket ID</Th>
-                                    <Th isNumeric>Class</Th>
-                                    <Th>Allowed Baggage (KG)</Th>
-                                </Tr>
-                            </Tfoot>
                         </Table>
                     </TableContainer>
 
@@ -210,7 +222,7 @@ const CalculateBaggage: React.FC = () => {
                     _hover={{
                         bg: 'blue.500',
                     }}
-                    onClick={openModal}
+                    onClick={() => addTransactionToFirestore((totalWeight - state.tickets.reduce((acc, item) => acc + item.allowedWeight, 0)) * 100  < 0 ? 0 :(totalWeight - state.tickets.reduce((acc, item) => acc + item.allowedWeight, 0)) * 100)}
                 >
                     Generate Invoice
                 </Button>
@@ -223,19 +235,52 @@ const CalculateBaggage: React.FC = () => {
                     <ModalHeader>Your Invoice</ModalHeader>
                     <ModalCloseButton />
                     <ModalBody justifyContent={"center"} ref={invoiceRef}>
-                        <Heading>{paymentID}</Heading>
-                        <QRCode fgColor="#fff" bgColor="#000" value="D002"/>
-                        <Text>
-                            Excess: {totalWeight - state.tickets.reduce((acc, item) => acc + item.allowedWeight, 0)}
-                        </Text>
+                        <VStack>
+                            <Heading>{paymentID}</Heading>
+                            <QRCode 
+                                fgColor="#fff" 
+                                bgColor="#000" 
+                                value={paymentID}
+                                //`https://baggage-cost-app.netlify.app/transaction/
+                            />
 
-                        <Text>
-                            Amount to be Paid: {(totalWeight - state.tickets.reduce((acc, item) => acc + item.allowedWeight, 0)) * 100  < 0 ? 0 :(totalWeight - state.tickets.reduce((acc, item) => acc + item.allowedWeight, 0)) * 1500}
-                        </Text>
+                            <div>
+                                <Text textAlign="center">
+                                    Excess: {totalWeight - state.tickets.reduce((acc, item) => acc + item.allowedWeight, 0)} kg
+                                </Text>
+
+                                <Text>
+                                    Amount to be Paid: &#8358; {(totalWeight - state.tickets.reduce((acc, item) => acc + item.allowedWeight, 0)) * 100  < 0 ? 0 :(totalWeight - state.tickets.reduce((acc, item) => acc + item.allowedWeight, 0)) * 1500}
+                                </Text>
+                            </div>
+
+                            <section className="staff-table">
+                                <TableContainer>
+                                    <Table variant='striped' colorScheme='teal'>
+                                        <Thead position="sticky" top={0}>
+                                            <Tr>
+                                                <Th>Ticket ID</Th>
+                                                <Th>Allowed Baggage (KG)</Th>
+                                            </Tr>
+                                        </Thead>
+                                        <Tbody>
+                                            {
+                                                state.tickets.map((item, index) => (
+                                                    <Tr key={index}>
+                                                        <Td>{item.id}</Td>
+                                                        <Td>{item.allowedWeight}</Td>
+                                                    </Tr>
+                                                ))
+                                            }
+                                        </Tbody>
+                                    </Table>
+                                </TableContainer>
+                            </section>
+                        </VStack>
                     </ModalBody>
                     <ModalFooter>
                         <Button 
-                            onClick={() => generateInvoice((totalWeight - state.tickets.reduce((acc, item) => acc + item.allowedWeight, 0)) * 100  < 0 ? 0 :(totalWeight - state.tickets.reduce((acc, item) => acc + item.allowedWeight, 0)) * 100)} 
+                            onClick={generateInvoice} 
                             colorScheme='blue' 
                             mr={3} 
                         >
