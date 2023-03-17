@@ -16,28 +16,19 @@ import {
   useDisclosure,
   BoxProps,
   FlexProps,
-  Menu,
-  MenuButton,
-  MenuDivider,
-  MenuItem,
-  MenuList,
+  Image
 } from '@chakra-ui/react';
 
 import {
   FiHome,
   FiTrendingUp,
-  FiCompass,
-  FiStar,
-  FiSettings,
-  FiMenu,
-  FiBell,
-  FiChevronDown,
 } from 'react-icons/fi';
 import { IconType } from 'react-icons';
 import MobileNav from '../../components/MobileNav';
 import { Outlet, Link as ReactRouterLink, useLocation } from 'react-router-dom';
 import { MdOutlineAirplaneTicket } from 'react-icons/md';
 
+import Logo from '../../assets/logo.png';
 interface LinkItemProps {
   name: string;
   icon: IconType;
@@ -95,9 +86,7 @@ const SidebarContent = ({ onClose, ...rest }: SidebarProps) => {
         {...rest}
     >
         <Flex h="20" alignItems="center" mx="8" justifyContent="space-between">
-            <Text fontSize="2xl" fontFamily="monospace" fontWeight="bold">
-            Logo
-            </Text>
+            <Image src={Logo} marginY="10%" />
             <CloseButton display={{ base: 'flex', md: 'none' }} onClick={onClose} />
         </Flex>
         {LinkItems.map((link) => (

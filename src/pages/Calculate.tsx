@@ -1,4 +1,4 @@
-import { Box, Button, Container, Flex, Heading, HStack, Input, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay, Select, Stack, Table, TableContainer, Tbody, Td, Text, Tfoot, Th, Thead, Tr, useColorModeValue, useDisclosure, useToast, VStack } from "@chakra-ui/react";
+import { Box, Button, Container, Flex, Heading, HStack, Input, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay, Radio, RadioGroup, Select, Stack, Table, TableContainer, Tbody, Td, Text, Tfoot, Th, Thead, Tr, useColorModeValue, useDisclosure, useToast, VStack } from "@chakra-ui/react";
 import { useReducer, useRef, useState } from "react";
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
@@ -8,7 +8,7 @@ import { addDoc, collection, doc, setDoc, Timestamp } from "firebase/firestore";
 import { auth, firestore } from "../environments/firebase";
 import { useAllowedWeights } from '../hooks/useAllowedWeights';
 import { generate12CharId } from "../helpers/generateId";
-
+import Logo from '../assets/logo.png';
 
 interface ReducerState {
     tickets: {
@@ -72,10 +72,20 @@ const CalculateBaggage: React.FC = () => {
     }
 
     const addTransactionToFirestore = async (amount: number) => {
-        onOpen();
+        if(!totalWeight){
+            toast({
+                title: "Total Weight not defined",
+                position: "top-right",
+                status: "error",
+                isClosable: true
+            })
+            return;
+        }
+        
         const paymentId = generateId();
         setPaymentID(paymentId);
 
+        onOpen();
         try {
             await setDoc(transactionsRef, {
                 payment_id: paymentId,
@@ -86,7 +96,8 @@ const CalculateBaggage: React.FC = () => {
                     name: auth.currentUser?.displayName!
                 },
                 status: "pending",
-                tickets: state.tickets
+                tickets: state.tickets,
+                booking_reference: state.tickets.map((item) => item.id)
             })
 
             toast({
@@ -127,107 +138,117 @@ const CalculateBaggage: React.FC = () => {
         <Flex
             minH={'100vh'}
             align={'center'}
-            justify={'center'}
             direction="column"
             padding={2}
             bg={useColorModeValue('gray.50', 'gray.800')}
         >
-            <Container minWidth="50%" maxWidth="90%">
+            <img width="150px" src={Logo} alt="Adman-Logo"/>
+            <Flex>
+                <Container maxWidth="35%">
+                    <Stack>
+                        <div>
+                            <Text>Booking Reference</Text>
+                            <Input 
+                                onChange={(e) => setTicketID(e.target.value)} 
+                                placeholder="Enter the booking reference" 
+                            />
+                        </div>
 
-                <Stack>
-                    <div>
-                        <Text>Ticket ID</Text>
-                        <Input onChange={(e) => setTicketID(e.target.value)} placeholder="Enter the ticket ID" />
-                    </div>
+                        <div>
+                            <Text>Class</Text>
+                            <RadioGroup onChange={setClass}>
+                                <Stack>
+                                    {
+                                        allowedWeights.map((item, index) => (
+                                            <Radio key={index} value={item.id}>{item.id.replaceAll('-', ' ')}</Radio>
+                                        ))
+                                    }
+                                </Stack>
+                            </RadioGroup>
+                        </div>
 
-                    <div>
-                        <Text>Class</Text>
-                        <Select variant={'filled'} onChange={(e) => setClass(e.target.value)}>
-                            <option value=""></option>
-                            {
-                                allowedWeights.map((item, index) => (
-                                    <option key={index} value={item.id}>{item.id.replaceAll('-', ' ')}</option>
-                                ))
-                            }
-                        </Select>
-                    </div>
+                        <Button marginY={2} bg="teal" color="white" onClick={AddTicket}>
+                            Add Ticket
+                        </Button>
 
-                    <Button marginY={2} bg="teal" color="white" onClick={AddTicket}>
-                        Add Ticket
+                    </Stack>
+
+
+                    
+
+                    <HStack marginY={3} width="100%" justify={'center'}>
+                        <div>
+                            <Text>Total Allowed</Text>
+                            <Input 
+                                placeholder="Total Allowed" 
+                                disabled
+                                value={state.tickets.reduce((acc, item) => acc + item.allowedWeight, 0)}
+                            />
+                        </div>
+
+                        <div>
+                            <Text>Total Weight</Text>
+                            <Input 
+                                required
+                                isInvalid={!totalWeight}
+                                type="number"
+                                onChange={(e:any) => setTotalWeight(e.target.valueAsNumber)} 
+                                placeholder="Total Weight of all bags" 
+                            />
+                        </div>
+
+                        <div>
+                            <Text>Excess Weight</Text>
+                            <Input 
+                                disabled 
+                                value={`${totalWeight - state.tickets.reduce((acc, item) => acc + item.allowedWeight, 0)}`} placeholder="Total Weight of all bags" />
+                        </div>
+
+
+                    </HStack>
+                    <Button
+                        width="full"
+                        bg={'blue.400'}
+                        color={'white'}
+                        _hover={{
+                            bg: 'blue.500',
+                        }}
+                        onClick={() => addTransactionToFirestore((totalWeight - state.tickets.reduce((acc, item) => acc + item.allowedWeight, 0)) * 100  < 0 ? 0 :(totalWeight - state.tickets.reduce((acc, item) => acc + item.allowedWeight, 0)) * 100)}
+                    >
+                        Generate Invoice
                     </Button>
 
-                </Stack>
-
-
-                <section className="staff-table">
-                    <TableContainer overflowY={"auto"} maxHeight="250px">
-                        <Table variant='striped' colorScheme='teal'>
-                            <Thead position="sticky" top={0} zIndex={999}>
-                                <Tr>
-                                    <Th>S/N</Th>
-                                    <Th>Ticket ID</Th>
-                                    <Th isNumeric>Class</Th>
-                                    <Th>Allowed Baggage (KG)</Th>
-                                </Tr>
-                            </Thead>
-                            <Tbody zIndex={5}>
-                                {
-                                    state.tickets.map((item, index) => (
-                                        <Tr key={index}>
-                                            <Td>{index}</Td>
-                                            <Td>{item.id}</Td>
-                                            <Td isNumeric>{item.class}</Td>
-                                            <Td>{item.allowedWeight}</Td>
+                </Container>
+                <Container maxWidth="60%">
+                    <section className="staff-table">
+                            <TableContainer overflowY={"auto"} maxHeight="250px">
+                                <Table variant='striped' colorScheme='teal'>
+                                    <Thead position="sticky" top={0} zIndex={999}>
+                                        <Tr>
+                                            <Th>S/N</Th>
+                                            <Th>Booking Reference</Th>
+                                            <Th isNumeric>Class</Th>
+                                            <Th>Allowed Baggage (KG)</Th>
                                         </Tr>
-                                    ))
-                                }
-                            </Tbody>
-                        </Table>
-                    </TableContainer>
+                                    </Thead>
+                                    <Tbody zIndex={5}>
+                                        {
+                                            state.tickets.map((item, index) => (
+                                                <Tr key={index}>
+                                                    <Td>{index}</Td>
+                                                    <Td>{item.id}</Td>
+                                                    <Td isNumeric>{item.class}</Td>
+                                                    <Td>{item.allowedWeight}</Td>
+                                                </Tr>
+                                            ))
+                                        }
+                                    </Tbody>
+                                </Table>
+                            </TableContainer>
 
-                </section>
-
-                <HStack marginY={3} width="100%" justify={'center'}>
-                    <div>
-                        <Text>Total Allowed</Text>
-                        <Input 
-                            placeholder="Total Allowed" 
-                            disabled
-                            value={state.tickets.reduce((acc, item) => acc + item.allowedWeight, 0)}
-                        />
-                    </div>
-
-                    <div>
-                        <Text>Total Weight</Text>
-                        <Input 
-                            type="number"
-                            onChange={(e:any) => setTotalWeight(e.target.valueAsNumber)} 
-                            placeholder="Total Weight of all bags" 
-                        />
-                    </div>
-
-                    <div>
-                        <Text>Excess Weight</Text>
-                        <Input 
-                            disabled 
-                            value={`${totalWeight - state.tickets.reduce((acc, item) => acc + item.allowedWeight, 0)}`} placeholder="Total Weight of all bags" />
-                    </div>
-
-
-                </HStack>
-                <Button
-                    width="full"
-                    bg={'blue.400'}
-                    color={'white'}
-                    _hover={{
-                        bg: 'blue.500',
-                    }}
-                    onClick={() => addTransactionToFirestore((totalWeight - state.tickets.reduce((acc, item) => acc + item.allowedWeight, 0)) * 100  < 0 ? 0 :(totalWeight - state.tickets.reduce((acc, item) => acc + item.allowedWeight, 0)) * 100)}
-                >
-                    Generate Invoice
-                </Button>
-
-            </Container>
+                        </section>
+                </Container>
+            </Flex>
             
             <Modal isOpen={isOpen} onClose={onClose}>
                 <ModalOverlay />
@@ -259,7 +280,7 @@ const CalculateBaggage: React.FC = () => {
                                     <Table variant='striped' colorScheme='teal'>
                                         <Thead position="sticky" top={0}>
                                             <Tr>
-                                                <Th>Ticket ID</Th>
+                                                <Th>Booking Reference</Th>
                                                 <Th>Allowed Baggage (KG)</Th>
                                             </Tr>
                                         </Thead>
@@ -295,7 +316,14 @@ const CalculateBaggage: React.FC = () => {
                     </ModalFooter>
                 </ModalContent>
             </Modal>
-
+            
+            <Text
+                position={"absolute"}
+                bottom={15}
+                fontFamily="mono"
+            >
+                Powered by Wheels and Compass &#169; 2023
+            </Text>
         </Flex>
     )
 }

@@ -11,9 +11,14 @@ interface Transaction {
         name: string;
     };
     payment_id: string;
+    tickets?: {
+        allowedWeights: number,
+        class: string;
+        id: string;
+    }[]
 }
 
-export const useStaff = () => {
+export const useTransaction = () => {
     const [transaction, setTransaction] = useState<Transaction[]>([]);
     const [isLoading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<boolean>(true);
