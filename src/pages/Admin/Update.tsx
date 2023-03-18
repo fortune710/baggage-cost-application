@@ -1,6 +1,7 @@
-import { TableContainer, Table, Thead, Tr, Th, Button, Tbody, Td, Skeleton, Tfoot, useDisclosure, Heading, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay, FormControl, FormLabel, Input, Stack, useToast } from "@chakra-ui/react";
+import { TableContainer, Table, Thead, Tr, Th, Button, Tbody, Td, Skeleton, Tfoot, useDisclosure, Heading, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay, FormControl, FormLabel, Input, Stack, useToast, AlertDialog, AlertDialogBody, AlertDialogCloseButton, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogOverlay } from "@chakra-ui/react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { doc, setDoc, updateDoc } from "firebase/firestore";
+import { deleteDoc, doc, setDoc, updateDoc } from "firebase/firestore";
+import { useRef } from "react";
 import { useState } from "react";
 import { BiReset } from "react-icons/bi";
 import { MdDelete } from "react-icons/md";
@@ -17,9 +18,16 @@ const Update: React.FC = () => {
         onClose: updateOnClose
     } = useDisclosure();
 
+    const { 
+        isOpen: alertIsOpen,
+        onOpen: alertOnOpen,
+        onClose: alertOnClose 
+    } = useDisclosure();
+
     const queryClient = useQueryClient();
     
-    const [updateForm, setUpdateForm] = useState<any>(undefined)
+    const [selectedTicketClass, setSelected] = useState<string>("");
+    const [updateForm, setUpdateForm] = useState<any>(undefined);
 
     const [form, setForm] = useState({
         name: '',
@@ -31,6 +39,11 @@ const Update: React.FC = () => {
     const handleUpdateClick = (data:any) => {
         updateOnOpen();
         setUpdateForm(data);
+    }
+
+    const handleDeleteClick = (id:string) => {
+        alertOnOpen();
+        setSelected(id)
     }
 
     const addClass = async () => {
@@ -90,6 +103,36 @@ const Update: React.FC = () => {
             })
         }
     })
+
+    const deleteTicketClass = async (id:string) => {
+        const ref = doc(firestore, "allowed-weights", id);
+        await deleteDoc(ref)
+    }
+
+    const deleteTicketMutation = useMutation(["delete-ticket-class"], (id:string) => deleteTicketClass(id), {
+        onSuccess: () => {
+            queryClient.invalidateQueries(["ticket-classes"]);
+            toast({
+                title: "Updated Class",
+                position: "top-right",
+                status: "success",
+                isClosable: true
+            })
+            setSelected("")
+            return alertOnClose();
+        },
+        onError: (err: any) => {
+            toast({
+                title: err.code,
+                position: "top-right",
+                status: "success",
+                isClosable: true
+            })
+        }
+    })
+
+    const cancelRef = useRef<any>();
+    
     return(
         <>
         
@@ -101,6 +144,7 @@ const Update: React.FC = () => {
                                 <Th>Ticket Class</Th>
                                 <Th isNumeric>Allowed Baggage Weight</Th>
                                 <Th isNumeric>Cost Per Kg</Th>
+                                <Th></Th>
                                 <Th></Th>
                             </Tr>
                         </Thead>
@@ -133,6 +177,15 @@ const Update: React.FC = () => {
                                                 onClick={() => handleUpdateClick(data)} 
                                                 colorScheme="yellow">
                                                 Update
+                                            </Button>
+                                        </Td>
+
+                                        <Td>
+                                            <Button
+                                                colorScheme="red"
+                                                onClick={() => handleDeleteClick(data.id)}
+                                            >
+                                                Delete
                                             </Button>
                                         </Td>
                                     </Tr>
@@ -268,7 +321,35 @@ const Update: React.FC = () => {
                     </ModalFooter>
                 </ModalContent>
             </Modal>
+            
+            <AlertDialog
+                motionPreset='slideInBottom'
+                leastDestructiveRef={cancelRef}
+                onClose={alertOnClose}
+                isOpen={alertIsOpen}
+                isCentered
+            >
+                <AlertDialogOverlay />
 
+                <AlertDialogContent>
+                <AlertDialogHeader>Delete Ticket Class?</AlertDialogHeader>
+                <AlertDialogCloseButton />
+                <AlertDialogBody>
+                    Are you sure you want to delete this ticket class?
+                </AlertDialogBody>
+                <AlertDialogFooter>
+                    <Button ref={cancelRef} onClick={alertOnClose}>
+                        No
+                    </Button>
+                    <Button 
+                        onClick={() => deleteTicketMutation.mutate(selectedTicketClass)}
+                        colorScheme='red' 
+                        ml={3}>
+                        Yes
+                    </Button>
+                </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </>
     )
 }

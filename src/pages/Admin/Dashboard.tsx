@@ -1,18 +1,13 @@
 import React, { ReactNode } from 'react';
 import {
-  IconButton,
-  Avatar,
   Box,
   CloseButton,
   Flex,
-  HStack,
-  VStack,
   Icon,
   useColorModeValue,
   Link,
   Drawer,
   DrawerContent,
-  Text,
   useDisclosure,
   BoxProps,
   FlexProps,
@@ -85,7 +80,7 @@ const SidebarContent = ({ onClose, ...rest }: SidebarProps) => {
         h="full"
         {...rest}
     >
-        <Flex h="20" alignItems="center" mx="8" justifyContent="space-between">
+        <Flex h="20" alignItems="center" my="5" mx="8" justifyContent="space-between">
             <Image src={Logo} marginY="10%" />
             <CloseButton display={{ base: 'flex', md: 'none' }} onClick={onClose} />
         </Flex>
@@ -120,12 +115,12 @@ const NavItem = ({ icon, children, route, ...rest }: NavItemProps) => {
           role="group"
           cursor="pointer"
           sx={{
-            bg: router.pathname === route && 'cyan.400',
+            bg: router.pathname === route && 'blue.500',
             color: router.pathname === route && 'white',
             marginBottom: '5px'
           }}
           _hover={{
-            bg: 'cyan.400',
+            bg: 'blue.500',
             color: 'white',
           }}
           {...rest}>

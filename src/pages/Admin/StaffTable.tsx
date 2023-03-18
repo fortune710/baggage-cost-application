@@ -106,7 +106,7 @@ const StaffTable: React.FC = () => {
                                     </Td>
                                 </Tr>
                             ) :
-                            staff.map((data) => (
+                            staff?.map((data) => (
                                 <Tr key={data.id}>
                                     <Td>{data.name}</Td>
                                     <Td>{data.email}</Td>
