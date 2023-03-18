@@ -5,7 +5,10 @@ import { firestore } from "../environments/firebase";
 interface Payment {
     id: string;
     amount: number;
-    date: string;
+    date: {
+        nanoseconds: number;
+        seconds: number;
+    };
     issued_by: {
         id: string;
         name: string;

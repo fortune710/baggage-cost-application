@@ -135,12 +135,12 @@ export default function UserHome(): JSX.Element {
                                 </Td>
                             </Tr>
                             ) :
-                            data.map((transaction, index) => (
-                                <Tr key={transaction.id}>
+                            data.map(({ id, amount, date }, index) => (
+                                <Tr key={id}>
                                     <Td>{index}</Td>
-                                    <Td>{transaction.id}</Td>
-                                    <Td isNumeric>{transaction.amount}</Td>
-                                    <Td>{""}</Td>
+                                    <Td>{id}</Td>
+                                    <Td isNumeric>{amount}</Td>
+                                    <Td>{new Timestamp(date.seconds, date.nanoseconds).toDate().toDateString()}</Td>
                                 </Tr>
                             ))
                         }
@@ -178,7 +178,7 @@ export default function UserHome(): JSX.Element {
                                 <Table variant='striped' colorScheme='teal'>
                                     <Thead position="sticky" top={0}>
                                         <Tr>
-                                            <Th>Ticket ID</Th>
+                                            <Th>Booking Reference</Th>
                                             <Th>Allowed Baggage (KG)</Th>
                                         </Tr>
                                     </Thead>

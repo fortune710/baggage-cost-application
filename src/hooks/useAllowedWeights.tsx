@@ -1,3 +1,4 @@
+import { useQuery } from "@tanstack/react-query";
 import { collection, getDocs } from "firebase/firestore";
 import { useState, useEffect } from "react";
 import { firestore } from "../environments/firebase";
@@ -9,42 +10,27 @@ interface TicketClass {
 }
 
 export const useAllowedWeights = () => {
-    const [allowedWeights, setAllowedWeights] = useState<TicketClass[]>([]);
-    const [isLoading, setLoading] = useState<boolean>(false);
-    const [error, setError] = useState<boolean>(true);
     
     const getAllowedWeights = async () => {
-        setLoading(true);
-        setError(false);
 
-        try {
-            let weights = [] as any[];
-            const ref = collection(firestore, 'allowed-weights');
-            const snapshot = await getDocs(ref);
+        let weights = [] as TicketClass[];
+        const ref = collection(firestore, 'allowed-weights');
+        const snapshot = await getDocs(ref);
 
-            if(snapshot.empty){
-                setLoading(false);
-                setAllowedWeights([])
-                return;
-            } else {
-                snapshot.forEach((doc) => {
-                    weights = [...weights, { id: doc.id, ...doc.data()}]
-                });
-                
-                setAllowedWeights(weights);
-                setLoading(false)
-            }
-            
-        } catch (error) {
-            setLoading(false)
-            setError(true);
-            console.error(error)
+        if(snapshot.empty){
+            return weights;
         }
+
+        snapshot.forEach((doc) => {
+            weights = [...weights, { id: doc.id, ...doc.data() as any }]
+        });
+        return weights;
     };
-    
-    useEffect(() => {
-        getAllowedWeights();
-    }, []);
-    
+
+    const { isLoading, data: allowedWeights, error } = useQuery(["ticket-classes"], getAllowedWeights, {
+        refetchInterval: false,
+        refetchOnWindowFocus: false,
+    })
+        
     return { allowedWeights, isLoading, error };
 }

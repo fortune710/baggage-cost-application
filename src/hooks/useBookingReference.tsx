@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { collection, getDocs, query, updateDoc, where } from "firebase/firestore";
+import { collection, getDocs, limit, orderBy, query, updateDoc, where } from "firebase/firestore";
 import { useState, useEffect } from "react";
 import { firestore } from "../environments/firebase";
 
@@ -22,7 +22,7 @@ interface Payment {
 
 export const useBookingRefernce = (id:string) => {
     const ref = collection(firestore, 'transactions');
-    const queryRef = query(ref, where('booking_references', 'array-contains', id));
+    const queryRef = query(ref, where('booking_reference', 'array-contains', id), limit(1));
 
     const getTransactions = async () => {
         let transactions = [] as any[];

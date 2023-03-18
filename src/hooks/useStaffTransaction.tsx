@@ -5,7 +5,10 @@ import { firestore } from "../environments/firebase";
 interface Transaction {
     id: string;
     amount: number;
-    date: string;
+    date: {
+        nanoseconds: number;
+        seconds: number;
+    };
     issued_by: {
         id: string;
         name: string;
@@ -35,7 +38,7 @@ export const useStaff = (id:string) => {
                 snapshot.forEach((doc) => {
                     transactions = [...transactions, { id: doc.id, ...doc.data() }]
                 });
-    
+                
                 setTransaction(transactions);
                 setLoading(false)
             }

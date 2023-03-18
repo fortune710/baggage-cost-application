@@ -3,10 +3,13 @@ import {
     Table, Thead, 
     Tr, Th, Tbody, 
     Td, 
+    Spinner,
     Text, Tfoot, 
     Skeleton, 
-    TableCaption, HStack, Button, Input, useDisclosure, Heading, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay, VStack } from "@chakra-ui/react"
+    TableCaption, HStack, Button, Input, useDisclosure, Heading, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay, VStack, Flex } from "@chakra-ui/react"
+import { Timestamp } from "firebase/firestore";
 import { useState } from "react";
+import Loading from "../../components/Loading";
 import { useBookingRefernce } from "../../hooks/useBookingReference";
 import { useTransaction } from "../../hooks/useTransaction"
 
@@ -15,30 +18,36 @@ const PaymentsPage: React.FC = () => {
     const { onOpen, isOpen, onClose } = useDisclosure();
     const [bookingRefrenceQuery, setBookingRefrence] = useState<string>("")
     const [searchText, setSearchText] = useState<string>("")
-    const { transaction: transactionFromBookingRef } = useBookingRefernce(bookingRefrenceQuery)
+    const { transaction: transactionFromBookingRef, isLoading: isLoadingBooking } = useBookingRefernce(bookingRefrenceQuery)
 
-    const searchUsingBookingRefernce = () => {
+    const searchUsingBookingRefernce = (e:any) => {
+        e.preventDefault();
         setBookingRefrence(searchText);
         onOpen()
     }
 
     return (
         <>
-            <HStack>
+            <HStack onSubmit={searchUsingBookingRefernce} as={"form"} gap="20px" marginY="1rem">
                 <Input
                     onChange={(e) => setSearchText(e.target.value)}
                     type="search"
                     placeholder="Enter booking reference"
+                    minWidth="40%"
+                    maxWidth="50%"
                 />
-                <Button onClick={searchUsingBookingRefernce}>
+                <Button 
+                    color="white"
+                    bgColor="blue.500" 
+                >
                     Search
                 </Button>
             </HStack>
 
             <section className="staff-table">
-                <TableContainer>
+                <TableContainer maxHeight="400px" overflowY="auto">
                     <Table variant='striped' colorScheme='teal'>
-                        { error && <TableCaption>Error While Loading Data</TableCaption>}
+                        { error ? <TableCaption>Error While Loading Data</TableCaption> : null}
                         <Thead>
                             <Tr>
                                 <Th>S/N</Th>
@@ -69,14 +78,14 @@ const PaymentsPage: React.FC = () => {
                                         </Td>
                                     </Tr>
                                 ) :
-                                transaction.map((transaction, index) => (
-                                    transaction.tickets?.map((ticket) => (
-                                        <Tr key={`${transaction.id}-${ticket.id}-${index}-${ticket.class}`}>
+                                transaction?.map(({ id, amount, date, tickets }, index) => (
+                                    tickets?.map((ticket) => (
+                                        <Tr key={`${id}-${ticket.id}-${index}-${ticket.class}`}>
                                             <Td>{index}</Td>
-                                            <Td>{transaction.id}</Td>
+                                            <Td>{id}</Td>
                                             <Td>{ticket.id}</Td>
-                                            <Td isNumeric>{transaction.amount}</Td>
-                                            <Td>{""}</Td>
+                                            <Td isNumeric>{amount}</Td>
+                                            <Td>{new Timestamp(date.seconds, date.nanoseconds).toDate().toDateString()}</Td>
                                         </Tr> 
                                     ))
                                 ))
@@ -102,10 +111,20 @@ const PaymentsPage: React.FC = () => {
                     <ModalCloseButton />
                     <ModalBody justifyContent={"center"}>
                         {
+                            isLoadingBooking ? 
+                            <Flex height="100%" align="center" justify="center">
+                                <Spinner
+                                    thickness='4px'
+                                    speed='0.65s'
+                                    emptyColor='gray.200'
+                                    color='blue.500'
+                                    size='xl'
+                                />
+                            </Flex>
+                            :
                             transactionFromBookingRef?.map((data) => (
                                 <>
-                                
-                                <VStack>
+                                <VStack key={data.id}>
                                     <Heading>{data.payment_id}</Heading>
                                     <section className="staff-table">
                                         <TableContainer maxWidth="100%">

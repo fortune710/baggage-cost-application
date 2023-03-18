@@ -1,4 +1,5 @@
 import { TableContainer, Table, Thead, Tr, Th, Button, Tbody, Td, Skeleton, Tfoot, useDisclosure, Heading, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay, FormControl, FormLabel, Input, Stack, useToast } from "@chakra-ui/react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { doc, setDoc, updateDoc } from "firebase/firestore";
 import { useState } from "react";
 import { BiReset } from "react-icons/bi";
@@ -13,8 +14,11 @@ const Update: React.FC = () => {
     const { 
         isOpen: updateisOpen, 
         onOpen: updateOnOpen, 
-        onClose: updateOnClose} = useDisclosure();
+        onClose: updateOnClose
+    } = useDisclosure();
 
+    const queryClient = useQueryClient();
+    
     const [updateForm, setUpdateForm] = useState<any>(undefined)
 
     const [form, setForm] = useState({
@@ -30,13 +34,16 @@ const Update: React.FC = () => {
     }
 
     const addClass = async () => {
-        try {
-            const ref = doc(firestore, "allowed-weights", form.name.replaceAll(' ', '-'))
-            await setDoc(ref, {
-                allowed_weight: form.allowed_weight,
-                cost_per_kg: form.cost_per_kg
-            })
+        const ref = doc(firestore, "allowed-weights", form.name.replaceAll(' ', '-'))
+        await setDoc(ref, {
+            allowed_weight: form.allowed_weight,
+            cost_per_kg: form.cost_per_kg
+        })
+    }
 
+    const addClassMutation = useMutation(["add-ticket-class"], addClass, {
+        onSuccess: () => {
+            queryClient.invalidateQueries(["ticket-classes"]);
             toast({
                 title: "Added Class",
                 position: "top-right",
@@ -44,7 +51,8 @@ const Update: React.FC = () => {
                 isClosable: true
             })
             onClose();
-        } catch (err:any) {
+        },
+        onError: (err: any) => {
             toast({
                 title: err.code,
                 position: "top-right",
@@ -52,16 +60,19 @@ const Update: React.FC = () => {
                 isClosable: true
             })
         }
-    }
+    })
 
     const updateClass = async () => {
-        try {
-            const ref = doc(firestore, "allowed-weights", updateForm.id.replaceAll(' ', '-'))
-            await updateDoc(ref, {
-                allowed_weight: form.allowed_weight,
-                cost_per_kg: form.cost_per_kg
-            })
+        const ref = doc(firestore, "allowed-weights", updateForm.id.replaceAll(' ', '-'))
+        await updateDoc(ref, {
+            allowed_weight: form.allowed_weight,
+            cost_per_kg: form.cost_per_kg
+        })
+    }
 
+    const { mutate } = useMutation(["ticket-class-mutation"], updateClass, {
+        onSuccess: () => {
+            queryClient.invalidateQueries(["ticket-classes"]);
             toast({
                 title: "Updated Class",
                 position: "top-right",
@@ -69,7 +80,8 @@ const Update: React.FC = () => {
                 isClosable: true
             })
             updateOnClose();
-        } catch (err:any) {
+        },
+        onError: (err: any) => {
             toast({
                 title: err.code,
                 position: "top-right",
@@ -77,7 +89,7 @@ const Update: React.FC = () => {
                 isClosable: true
             })
         }
-    }
+    })
     return(
         <>
         
@@ -110,7 +122,7 @@ const Update: React.FC = () => {
                                         </Td>
                                     </Tr>
                                 ) :
-                                allowedWeights.map((data) => (
+                                allowedWeights?.map((data) => (
                                     <Tr key={data.id}>
                                         <Td>{data.id}</Td>
                                         <Td isNumeric>{data.allowed_weight}</Td>
@@ -180,7 +192,7 @@ const Update: React.FC = () => {
                     </ModalBody>
                     <ModalFooter>
                         <Button 
-                            onClick={addClass} 
+                            onClick={() =>  addClassMutation.mutate()} 
                             colorScheme='blue' 
                             mr={3} 
                         >
@@ -212,7 +224,6 @@ const Update: React.FC = () => {
                                     value={updateForm?.id} 
                                     disabled
                                     placeholder="eg. First Class" 
-                                    onChange={(e:any) => setForm({ ...form, name: e.target.value }) } 
                                     required
                                 />
                             </FormControl>
@@ -222,7 +233,7 @@ const Update: React.FC = () => {
                                 <Input 
                                     defaultValue={updateForm?.allowed_weight}
                                     type="number" 
-                                    onChange={(e:any) => setForm({ ...updateForm, allowed_weight: e.target.valueAsNumber })} 
+                                    onChange={(e:any) => setForm({ ...form, allowed_weight: e.target.valueAsNumber })} 
                                     required
                                 />
                             </FormControl>
@@ -232,7 +243,7 @@ const Update: React.FC = () => {
                                 <Input
                                     defaultValue={updateForm?.cost_per_kg} 
                                     type="number" 
-                                    onChange={(e:any) => setForm({ ...updateForm, cost_per_kg: e.target.valueAsNumber })} 
+                                    onChange={(e:any) => setForm({ ...form, cost_per_kg: e.target.valueAsNumber })} 
                                     required
                                 />
                             </FormControl>
@@ -242,7 +253,7 @@ const Update: React.FC = () => {
                     </ModalBody>
                     <ModalFooter>
                         <Button 
-                            onClick={updateClass} 
+                            onClick={() => mutate()} 
                             colorScheme='blue' 
                             mr={3} 
                         >

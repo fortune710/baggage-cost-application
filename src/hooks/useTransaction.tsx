@@ -1,11 +1,15 @@
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { useQuery } from "@tanstack/react-query";
+import { collection, getDocs, orderBy, query, where } from "firebase/firestore";
 import { useState, useEffect } from "react";
 import { firestore } from "../environments/firebase";
 
 interface Transaction {
     id: string;
     amount: number;
-    date: string;
+    date: {
+        nanoseconds: number;
+        seconds: number;
+    };
     issued_by: {
         id: string;
         name: string;
@@ -19,40 +23,25 @@ interface Transaction {
 }
 
 export const useTransaction = () => {
-    const [transaction, setTransaction] = useState<Transaction[]>([]);
-    const [isLoading, setLoading] = useState<boolean>(false);
-    const [error, setError] = useState<boolean>(true);
-
     
     const getTransactions = async () => {
-        setLoading(true);
-        setError(false);
-        try {
-            let transactions = [] as any[];
-            const ref = collection(firestore, 'transactions');
-            const snapshot = await getDocs(ref);
-            
-            if(snapshot.empty){
-                setLoading(false);
-                setTransaction([])
-                return;
-            } else {
-                snapshot.forEach((doc) => {
-                    transactions = [...transactions, { id: doc.id, ...doc.data() }]
-                });
-    
-                setTransaction(transactions);
-                setLoading(false)
-            }
-        } catch (error) {
-            setLoading(false)
-            setError(true);
-        }
+        let transactions = [] as Transaction[];
+        const ref = collection(firestore, 'transactions');
+        const firestoreQuery = query(ref, orderBy('date', 'desc'))
+        const snapshot = await getDocs(firestoreQuery);
+        
+        if(snapshot.empty){
+            return transactions!;
+        } 
+        
+        snapshot.forEach((doc) => {
+            transactions = [...transactions, { id: doc.id, ...doc.data() as any }]
+        });
+
+        return transactions!;
     };
-    
-    useEffect(() => {
-        getTransactions();
-    }, []);
+
+    const { isLoading, data: transaction, error } = useQuery(["all-transactions"], getTransactions)
     
     return { transaction, isLoading, error };
 }

@@ -57,7 +57,7 @@ const MobileNav = ({ onOpen, ...rest }: MobileProps) => {
                                 alignItems="flex-start"
                                 spacing="1px"
                                 ml="2">
-                                <Text fontSize="sm">Azman</Text>
+                                <Text fontSize="sm">Adman</Text>
                                 <Text fontSize="xs" color="gray.600">
                                     Admin
                                 </Text>

@@ -66,7 +66,7 @@ const CalculateBaggage: React.FC = () => {
         const ticket = {
             id: ticketID,
             class: ticketClass,
-            allowedWeight: allowedWeights.find((weight) => weight.id === ticketClass)?.allowed_weight!
+            allowedWeight: allowedWeights?.find((weight) => weight.id === ticketClass)?.allowed_weight!
         }
         dispatch({ type: Actions.ADD_ITEM, payload: ticket });
     }
@@ -159,7 +159,7 @@ const CalculateBaggage: React.FC = () => {
                             <RadioGroup onChange={setClass}>
                                 <Stack>
                                     {
-                                        allowedWeights.map((item, index) => (
+                                        allowedWeights?.map((item, index) => (
                                             <Radio key={index} value={item.id}>{item.id.replaceAll('-', ' ')}</Radio>
                                         ))
                                     }
