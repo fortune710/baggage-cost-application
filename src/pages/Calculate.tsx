@@ -20,22 +20,28 @@ interface ReducerState {
 
 interface ReducerAction {
     type: Actions;
-    payload: any;
+    payload?: any;
 }
 
 enum Actions {
-    ADD_ITEM = 'ADD_ITEM'
+    ADD_ITEM = 'ADD_ITEM',
+    EMPTY_TICKETS = 'EMPTY_TICKETS'
 }
 
 const reducer = (state:ReducerState, action:ReducerAction) => {
     switch (action.type) {
-      case 'ADD_ITEM':
-        return {
-          ...state,
-          tickets: [...state.tickets, action.payload]
-        };
-      default:
-        return state;
+        case 'ADD_ITEM':
+            return {
+            ...state,
+            tickets: [...state.tickets, action.payload]
+            };
+        case 'EMPTY_TICKETS':
+            return {
+                ...state,
+                tickets: []
+            }
+        default:
+            return state;
     }
 };
 
@@ -50,6 +56,7 @@ function generateId() {
 const CalculateBaggage: React.FC = () => {
     const [state, dispatch] = useReducer(reducer, { tickets: [] });
     const [ticketID, setTicketID] = useState<string>("");
+    //Ticket ID eventually named to booking reference
     const [ticketClass, setClass] = useState<string>("");
 
     const [totalWeight, setTotalWeight] = useState<number>(0);
@@ -99,7 +106,7 @@ const CalculateBaggage: React.FC = () => {
                 tickets: state.tickets,
                 booking_reference: state.tickets.map((item) => item.id)
             })
-
+            
             toast({
                 title: "Successful",
                 position: "top-right",
@@ -116,6 +123,13 @@ const CalculateBaggage: React.FC = () => {
             })
         
         }   
+    }
+
+    const handleModalClose = () => {
+        onClose();
+        dispatch({ type: Actions.EMPTY_TICKETS })
+        setTotalWeight(0);
+        setTicketID("")
     }
 
     const generateInvoice = async () => {
@@ -149,6 +163,7 @@ const CalculateBaggage: React.FC = () => {
                         <div>
                             <Text>Booking Reference</Text>
                             <Input 
+                                value={ticketID}
                                 onChange={(e) => setTicketID(e.target.value)} 
                                 placeholder="Enter the booking reference" 
                             />
@@ -190,6 +205,7 @@ const CalculateBaggage: React.FC = () => {
                             <Text>Total Weight</Text>
                             <Input 
                                 required
+                                value={totalWeight}
                                 isInvalid={!totalWeight}
                                 type="number"
                                 onChange={(e:any) => setTotalWeight(e.target.valueAsNumber)} 
@@ -254,7 +270,7 @@ const CalculateBaggage: React.FC = () => {
                 <ModalOverlay />
                 <ModalContent>
                     <ModalHeader>Your Invoice</ModalHeader>
-                    <ModalCloseButton />
+                    <ModalCloseButton onClick={handleModalClose} />
                     <ModalBody justifyContent={"center"} ref={invoiceRef}>
                         <VStack>
                             <Heading>{paymentID}</Heading>
@@ -308,7 +324,7 @@ const CalculateBaggage: React.FC = () => {
                             Print Invoice
                         </Button>
                         <Button 
-                            onClick={onClose} 
+                            onClick={handleModalClose} 
                             variant='ghost'
                         >
                             Close
