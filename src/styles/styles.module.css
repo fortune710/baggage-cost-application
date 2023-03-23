@@ -1,0 +1,15 @@
+.calculateContainer {
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+@media screen and (max-width: 900px) and (orientation: portrait) {
+    .calculateContainer {
+        flex-direction: column;
+    }
+
+    .calculateContainer section {
+        margin: 20px 0;
+    }
+}

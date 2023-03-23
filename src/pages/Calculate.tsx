@@ -10,6 +10,8 @@ import { useAllowedWeights } from '../hooks/useAllowedWeights';
 import { generate12CharId } from "../helpers/generateId";
 import Logo from '../assets/logo.png';
 
+import styles from '../styles/styles.module.css';
+
 interface ReducerState {
     tickets: {
         id: string;
@@ -157,8 +159,8 @@ const CalculateBaggage: React.FC = () => {
             bg={useColorModeValue('gray.50', 'gray.800')}
         >
             <img width="150px" src={Logo} alt="Adman-Logo"/>
-            <Flex>
-                <Container maxWidth="35%">
+            <Flex className={styles.calculateContainer}>
+                <Container minWidth="35%" maxWidth="70%">
                     <Stack>
                         <div>
                             <Text>Booking Reference</Text>
@@ -235,7 +237,7 @@ const CalculateBaggage: React.FC = () => {
                     </Button>
 
                 </Container>
-                <Container maxWidth="60%">
+                <Container minWidth="60%" maxWidth="90%">
                     <section className="staff-table">
                             <TableContainer overflowY={"auto"} maxHeight="250px">
                                 <Table variant='striped' colorScheme='teal'>
