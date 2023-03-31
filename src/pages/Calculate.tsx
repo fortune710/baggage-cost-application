@@ -10,7 +10,9 @@ import { useAllowedWeights } from '../hooks/useAllowedWeights';
 import { generate12CharId } from "../helpers/generateId";
 import Logo from '../assets/logo.png';
 
+import { Link } from "react-router-dom";
 import styles from '../styles/styles.module.css';
+import { MdArrowBack } from "react-icons/md";
 
 interface ReducerState {
     tickets: {
@@ -158,8 +160,14 @@ const CalculateBaggage: React.FC = () => {
             align={'center'}
             direction="column"
             padding={2}
+            position="relative"
             bg={useColorModeValue('gray.50', 'gray.800')}
         >
+            <Flex position="absolute" top={10} left={15}>
+                <Link to="/home">
+                    <MdArrowBack size={30}/>
+                </Link>
+            </Flex>
             <img width="150px" src={Logo} alt="Adman-Logo"/>
             <Flex className={styles.calculateContainer}>
                 <Container minWidth="35%" maxWidth="70%">
