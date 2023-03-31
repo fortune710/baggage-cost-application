@@ -1,3 +1,4 @@
+//import { BleClient } from '@capacitor-community/bluetooth-le';
 import {
     Flex,
     Box,
@@ -15,7 +16,7 @@ import {
 } from '@chakra-ui/react';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { doc, Timestamp, updateDoc } from 'firebase/firestore';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auth, firestore } from '../environments/firebase';
 
@@ -34,9 +35,6 @@ function LoginCard() {
   });
   const [isLoading, setLoading] = useState<boolean>(false);
   const toast = useToast();
-
-
-  
 
   const signIn = async () => {
     setLoading(true);
@@ -125,10 +123,11 @@ function LoginCard() {
 }
 
 const LoginPage: React.FC = () => {
+
+ 
     return(
         <main>
             <LoginCard/>
-
         </main>
     )
 }

@@ -2,9 +2,13 @@ import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.adman.app',
-  appName: 'adman-baggage-calculator',
+  appName: 'Adman',
   webDir: 'dist',
-  bundledWebRuntime: false
+  bundledWebRuntime: false,
+  /*
+  plugins: {
+    blur
+  }*/
 };
 
 export default config;

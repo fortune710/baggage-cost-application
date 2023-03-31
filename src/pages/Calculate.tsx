@@ -78,6 +78,8 @@ const CalculateBaggage: React.FC = () => {
             allowedWeight: allowedWeights?.find((weight) => weight.id === ticketClass)?.allowed_weight!
         }
         dispatch({ type: Actions.ADD_ITEM, payload: ticket });
+        setTicketID("");
+        setClass("");
     }
 
     const addTransactionToFirestore = async (amount: number) => {
@@ -147,6 +149,7 @@ const CalculateBaggage: React.FC = () => {
     
         pdf.addImage(data, 'PNG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
         const file = pdf.save(`Payment-${paymentID}.pdf`);
+        file.autoPrint();
   
     }
 
@@ -173,7 +176,7 @@ const CalculateBaggage: React.FC = () => {
 
                         <div>
                             <Text>Class</Text>
-                            <RadioGroup onChange={setClass}>
+                            <RadioGroup value={ticketClass} onChange={setClass}>
                                 <Stack>
                                     {
                                         allowedWeights?.map((item, index) => (

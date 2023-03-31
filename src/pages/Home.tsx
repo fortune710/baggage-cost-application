@@ -30,10 +30,17 @@ import {
     ModalHeader,
     ModalOverlay,
     VStack,
-    useToast
+    useToast,
+    AlertDialog,
+    AlertDialogOverlay,
+    AlertDialogBody,
+    AlertDialogContent,
+    AlertDialogFooter,
+    AlertDialogHeader
 } from '@chakra-ui/react';
+import { signOut } from 'firebase/auth';
 import { doc, Timestamp, updateDoc } from 'firebase/firestore';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { QRCode } from 'react-qrcode-logo';
 import { useNavigate } from 'react-router-dom';
 import { auth, firestore } from '../environments/firebase';
@@ -51,6 +58,13 @@ export default function UserHome(): JSX.Element {
     const { isOpen, onOpen, onClose } = useDisclosure();
     const toast = useToast();
 
+    const cancelAlertRef = useRef(null);
+
+    const { 
+        isOpen:signOutAlertIsOpen, 
+        onOpen: SignOutAlertOnOpen, 
+        onClose: signOutAlertOnClose 
+    } = useDisclosure();
 
     const updateAmount = async (docId: string, newAmount: number) => {
         const ref = doc(firestore, 'transactions', docId);
@@ -77,6 +91,27 @@ export default function UserHome(): JSX.Element {
             })
         }
     }
+    const signOutUser = async () => {
+        try {
+            await signOut(auth);
+            toast({
+                title: "Sign Out Sucessful",
+                position: "top-right",
+                status: "success",
+                isClosable: true
+            })
+            navigate('/login');
+            signOutAlertOnClose();
+        } catch (err) {
+            toast({
+                title: "Sign Out Failed",
+                position: "top-right",
+                status: "error",
+                isClosable: true
+            })
+        }
+
+    }
 
     
     return (
@@ -85,10 +120,20 @@ export default function UserHome(): JSX.Element {
         align={'center'}
         justify={'center'}
         direction="column"
+        position={"relative"}
         padding={2}
         gap={30}
         bg={useColorModeValue('gray.50', 'gray.800')}>
         
+        <Button
+            position={"absolute"}
+            top={10}
+            right={50}
+            colorScheme="red"
+            onClick={SignOutAlertOnOpen}
+        >
+            Sign Out
+        </Button>
         <Button onClick={() => navigate('/calculate')}>
             New Transaction
         </Button>
@@ -109,15 +154,16 @@ export default function UserHome(): JSX.Element {
             <TableContainer overflowY={"auto"} maxHeight="300px">
                 <Table variant='striped' colorScheme='teal'>
                     {!isLoading && data.length === 0 && <TableCaption>Make a new transaction</TableCaption>}
-                    <Thead>
+                    <Thead zIndex={10} top={0} position={"sticky"}>
                         <Tr>
                             <Th>S/N</Th>
                             <Th>Transaction ID</Th>
+                            <Th>Payment ID</Th>
                             <Th isNumeric>Amount</Th>
                             <Th>Date</Th>
                         </Tr>
                     </Thead>
-                    <Tbody>
+                    <Tbody zIndex={-1}>
                         {
                             isLoading ? (
                             <Tr>
@@ -133,12 +179,16 @@ export default function UserHome(): JSX.Element {
                                 <Td>
                                     <Skeleton/>
                                 </Td>
+                                <Td>
+                                    <Skeleton/>
+                                </Td>
                             </Tr>
                             ) :
-                            data.map(({ id, amount, date }, index) => (
+                            data.map(({ id, amount, date, payment_id }, index) => (
                                 <Tr key={id}>
                                     <Td>{index}</Td>
                                     <Td>{id}</Td>
+                                    <Td>{payment_id}</Td>
                                     <Td isNumeric>{amount}</Td>
                                     <Td>{new Timestamp(date.seconds, date.nanoseconds).toDate().toDateString()}</Td>
                                 </Tr>
@@ -161,6 +211,33 @@ export default function UserHome(): JSX.Element {
             </TableContainer>
 
         </section>
+
+        <AlertDialog
+            isOpen={signOutAlertIsOpen}
+            onClose={signOutAlertOnClose}
+            leastDestructiveRef={cancelAlertRef}
+        >
+            <AlertDialogOverlay>
+                <AlertDialogContent>
+                    <AlertDialogHeader>Sign Out</AlertDialogHeader>
+                    <AlertDialogBody>
+                        Are you sure you want to sign out?
+                    </AlertDialogBody>
+                    <AlertDialogFooter>
+                        <Button ref={cancelAlertRef} onClick={signOutAlertOnClose}>
+                            Cancel
+                        </Button>
+                        <Button 
+                            colorScheme="red" 
+                            onClick={signOutUser} 
+                            ml={3}
+                        >
+                            Sign Out
+                        </Button>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialogOverlay>
+        </AlertDialog>
 
 
 

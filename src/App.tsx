@@ -7,12 +7,14 @@ import './App.css'
 import LoginPage from './pages/Login';
 import { lazy, Suspense } from 'react';
 import Loading from './components/Loading';
-import UserHome from './pages/Home';
-import CalculateBaggage from './pages/Calculate';
+
 import AddUserPage from './pages/Admin/CreateUser';
 import PaymentsPage from './pages/Admin/Transactions';
 import Update from './pages/Admin/Update';
 import ViewTransaction from './pages/SeeTransaction';
+
+const UserHome = lazy(() => import('./pages/Home').then(module => ({ default: module.default })))
+const CalculateBaggage = lazy(() => import('./pages/Calculate').then(module => ({ default: module.default })))
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword').then(module => ({ default: module.default })));
 
 function App() {
