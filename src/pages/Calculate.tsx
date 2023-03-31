@@ -149,7 +149,6 @@ const CalculateBaggage: React.FC = () => {
     
         pdf.addImage(data, 'PNG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
         const file = pdf.save(`Payment-${paymentID}.pdf`);
-        file.autoPrint();
   
     }
 
