@@ -118,9 +118,9 @@ const CalculateBaggage: React.FC = () => {
                 status: "pending",
                 tickets: state.tickets,
                 booking_reference: state.tickets.map((item) => item.id),
-                aiports: airport
+                airports: airport
             })
-            
+
             toast({
                 title: "Successful",
                 position: "top-right",
