@@ -249,7 +249,7 @@ const CalculateBaggage: React.FC = () => {
                         _hover={{
                             bg: 'blue.500',
                         }}
-                        onClick={() => addTransactionToFirestore((totalWeight - state.tickets.reduce((acc, item) => acc + item.allowedWeight, 0)) * 100  < 0 ? 0 :(totalWeight - state.tickets.reduce((acc, item) => acc + item.allowedWeight, 0)) * 100)}
+                        onClick={() => addTransactionToFirestore((totalWeight - state.tickets.reduce((acc, item) => acc + item.allowedWeight, 0)) * 2500  < 0 ? 0 :(totalWeight - state.tickets.reduce((acc, item) => acc + item.allowedWeight, 0)) * 2500)}
                     >
                         Generate Invoice
                     </Button>
