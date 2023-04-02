@@ -1,4 +1,4 @@
-import { Box, Button, Container, Flex, Heading, HStack, Input, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay, Radio, RadioGroup, Select, Stack, Table, TableContainer, Tbody, Td, Text, Tfoot, Th, Thead, Tr, useColorModeValue, useDisclosure, useToast, VStack } from "@chakra-ui/react";
+import { Box, Button, Container, Flex, Heading, HStack, Input, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay, Radio, RadioGroup, Select, Stack, Table, TableContainer, Tbody, Td, Text, Tfoot, Th, Thead, Tr, useColorModeValue, useDisclosure, useMediaQuery, useToast, VStack } from "@chakra-ui/react";
 import { useReducer, useRef, useState } from "react";
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
@@ -14,6 +14,7 @@ import { Link } from "react-router-dom";
 import styles from '../styles/styles.module.css';
 import { MdArrowBack } from "react-icons/md";
 
+import data from './states.json'
 interface ReducerState {
     tickets: {
         id: string;
@@ -62,6 +63,10 @@ const CalculateBaggage: React.FC = () => {
     const [ticketID, setTicketID] = useState<string>("");
     //Ticket ID eventually named to booking reference
     const [ticketClass, setClass] = useState<string>("");
+    const [airport, setAirport] = useState<{
+        departure: string,
+        arrival: string,
+    }>({ departure: "", arrival: "" })
 
     const [totalWeight, setTotalWeight] = useState<number>(0);
     const invoiceRef = useRef<HTMLDivElement>(null);
@@ -72,6 +77,7 @@ const CalculateBaggage: React.FC = () => {
     const { allowedWeights } = useAllowedWeights();
     const toast = useToast();
 
+    const [isMobile] = useMediaQuery('(max-width: 450px)')
     
     const AddTicket = () => {
         const ticket = {
@@ -100,6 +106,7 @@ const CalculateBaggage: React.FC = () => {
 
         onOpen();
         try {
+            
             await setDoc(transactionsRef, {
                 payment_id: paymentId,
                 amount,
@@ -110,7 +117,8 @@ const CalculateBaggage: React.FC = () => {
                 },
                 status: "pending",
                 tickets: state.tickets,
-                booking_reference: state.tickets.map((item) => item.id)
+                booking_reference: state.tickets.map((item) => item.id),
+                aiports: airport
             })
             
             toast({
@@ -248,6 +256,41 @@ const CalculateBaggage: React.FC = () => {
 
                 </Container>
                 <Container minWidth="60%" maxWidth="90%">
+                    <Stack 
+                        marginY={2}
+                        width="100%" 
+                        gap="10px" 
+                        flexDirection={isMobile ? 'column' : 'row'} align="center"
+                    >
+                        <div>
+                            <Text>Departure</Text>
+                            <Select 
+                                onChange={(event) => setAirport((previousValue) => ({...previousValue, departure: event.target.value}))}
+                                minWidth={isMobile ? "100%":"47%"} placeholder="Select a state">
+                                {data.states.map(state => (
+                                    <option key={state} value={state}>
+                                        {state}
+                                    </option>
+                                ))}
+                            </Select>
+                        </div>
+                        <div>
+                            <Text>Arrival</Text>
+                            <Select 
+                                onChange={(event) => setAirport((previousValue) => ({...previousValue, arrival: event.target.value}))}
+                                minWidth={isMobile ? "100%":"47%"} 
+                                placeholder="Select a state"
+                            >
+                                {data.states.map(state => (
+                                    <option key={state} value={state}>
+                                        {state}
+                                    </option>
+                                ))}
+                            </Select>
+                        </div>
+
+                    </Stack>
+                    
                     <section className="staff-table">
                             <TableContainer overflowY={"auto"} maxHeight="250px">
                                 <Table variant='striped' colorScheme='teal'>

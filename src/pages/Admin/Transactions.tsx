@@ -53,6 +53,8 @@ const PaymentsPage: React.FC = () => {
                                 <Th>S/N</Th>
                                 <Th>Transaction ID</Th>
                                 <Th>Booking Refrence</Th>
+                                <Th>Destination</Th>
+                                <Th>Arrival</Th>
                                 <Th isNumeric>Amount</Th>
                                 <Th>Date</Th>
                             </Tr>
@@ -76,14 +78,22 @@ const PaymentsPage: React.FC = () => {
                                         <Td>
                                             <Skeleton/>
                                         </Td>
+                                        <Td>
+                                            <Skeleton/>
+                                        </Td>
+                                        <Td>
+                                            <Skeleton/>
+                                        </Td>
                                     </Tr>
                                 ) :
-                                transaction?.map(({ id, amount, date, tickets }, index) => (
+                                transaction?.map(({ id, amount, date, tickets, airports }, index) => (
                                     tickets?.map((ticket) => (
                                         <Tr key={`${id}-${ticket.id}-${index}-${ticket.class}`}>
                                             <Td>{index}</Td>
                                             <Td>{id}</Td>
                                             <Td>{ticket.id}</Td>
+                                            <Td>{airports?.departure ?? "N/A"}</Td>
+                                            <Td>{airports?.arrival ?? "N/A"}</Td>
                                             <Td isNumeric>{amount}</Td>
                                             <Td>{new Timestamp(date.seconds, date.nanoseconds).toDate().toDateString()}</Td>
                                         </Tr> 

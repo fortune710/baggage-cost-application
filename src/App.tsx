@@ -30,6 +30,7 @@ function App() {
 
         <Route path="/transaction/:id" element={<ViewTransaction/>}/>
         <Route path='/admin' element={<AdminDashboard/>}>
+          
           <Route path='users' index element={<StaffTable/>}/>
           <Route path="payments" element={<PaymentsPage/>}/>
           <Route path="add-user" element={<AddUserPage/>} />

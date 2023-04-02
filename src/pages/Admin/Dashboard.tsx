@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useEffect } from 'react';
 import {
   Box,
   CloseButton,
@@ -20,7 +20,7 @@ import {
 } from 'react-icons/fi';
 import { IconType } from 'react-icons';
 import MobileNav from '../../components/MobileNav';
-import { Outlet, Link as ReactRouterLink, useLocation } from 'react-router-dom';
+import { Outlet, Link as ReactRouterLink, useLocation, redirect } from 'react-router-dom';
 import { MdOutlineAirplaneTicket } from 'react-icons/md';
 
 import Logo from '../../assets/logo.png';
@@ -36,7 +36,12 @@ const LinkItems: Array<LinkItemProps> = [
 ];
 
 const AdminDashboard: React.FC = () => {
-    const { isOpen, onOpen, onClose } = useDisclosure();
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  
+  useEffect(() => {
+    redirect("/admin/users")
+  }, [])
+  
   return (
     <Box minH="100vh" bg={useColorModeValue('gray.100', 'gray.900')}>
       <SidebarContent
@@ -50,7 +55,7 @@ const AdminDashboard: React.FC = () => {
         onClose={onClose}
         returnFocusOnClose={false}
         onOverlayClick={onClose}
-        size="full">
+        >
         <DrawerContent>
           <SidebarContent onClose={onClose} />
         </DrawerContent>
@@ -81,7 +86,7 @@ const SidebarContent = ({ onClose, ...rest }: SidebarProps) => {
         {...rest}
     >
         <Flex h="20" alignItems="center" my="5" mx="8" justifyContent="space-between">
-            <Image src={Logo} marginY="10%" />
+            <Image maxWidth={150} src={Logo} marginY="10%" />
             <CloseButton display={{ base: 'flex', md: 'none' }} onClick={onClose} />
         </Flex>
         {LinkItems.map((link) => (
