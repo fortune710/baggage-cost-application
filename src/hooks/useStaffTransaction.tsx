@@ -1,20 +1,8 @@
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { useState, useEffect } from "react";
 import { firestore } from "../environments/firebase";
+import { Transaction } from "../types";
 
-interface Transaction {
-    id: string;
-    amount: number;
-    date: {
-        nanoseconds: number;
-        seconds: number;
-    };
-    issued_by: {
-        id: string;
-        name: string;
-    };
-    payment_id: string;
-}
 
 export const useStaff = (id:string) => {
     const [transaction, setTransaction] = useState<Transaction[]>([]);

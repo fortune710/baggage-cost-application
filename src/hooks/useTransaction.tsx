@@ -1,25 +1,17 @@
 import { useQuery } from "@tanstack/react-query";
 import { collection, getDocs, orderBy, query, where } from "firebase/firestore";
-import { useState, useEffect } from "react";
 import { firestore } from "../environments/firebase";
-
-interface Transaction {
-    id: string;
-    amount: number;
-    date: {
-        nanoseconds: number;
-        seconds: number;
-    };
-    issued_by: {
-        id: string;
-        name: string;
-    };
-    payment_id: string;
+import { Transaction as BaseTransaction } from "../types";
+interface Transaction extends BaseTransaction {
     tickets?: {
         allowedWeights: number,
         class: string;
         id: string;
-    }[]
+    }[],
+    airports?: {
+        departure: string;
+        arrival: string;
+    }
 }
 
 export const useTransaction = () => {
